@@ -19,7 +19,7 @@
 //  func main() {
 //      c := &stratumclient.Client{Username: "myuser",
 //                                 Password: "mypassword",
-//                                 BaseUrl:  "https://server/stratum/v1"}
+//                                 BaseURL:  "https://server/stratum/v1"}
 //      if err := c.Open(); err != nil {
 //          log.Fatal(err)
 //      }
@@ -51,8 +51,8 @@ import (
 type Client struct {
 	Username   string
 	Password   string
-	BaseUrl    string
-	UserAgent  string    
+	BaseURL    string
+	UserAgent  string
 	Timeout    int
 	prefix     string
 	url        *url.URL
@@ -63,29 +63,29 @@ type Client struct {
 
 // LoginResponse holds the response from a successful login
 type LoginResponse struct {
-	AccessToken   string `json:"access_token"`
-	ExpiresIn     int    `json:"expires_in"`
-	TokenType     string `json:"token_type"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
 }
 
 // Stringer function for LoginResponse fmt.String() compliant.
 func (l *LoginResponse) String() string {
-	return fmt.Sprintf("%s %d %s",l.AccessToken, l.ExpiresIn, l.TokenType)
+	return fmt.Sprintf("%s %d %s", l.AccessToken, l.ExpiresIn, l.TokenType)
 }
 
 // ErrorResponse holds connection and/or API errors.
 type ErrorResponse struct {
-	Backend      *BackendError `json:"backend,omitempty"`
-	Message      string        `json:"error,omitempty"`
-	Status       string
-	StatusCode   int
+	Backend    *BackendError `json:"backend,omitempty"`
+	Message    string        `json:"error,omitempty"`
+	Status     string
+	StatusCode int
 }
 
 // BackendError holds errors from the API backend (PostgreSQL). In
 // case such an error occurs, the BackendError will be added to the
 // ErrorResponse.
 type BackendError struct {
-	Sql      string `json:"sql,omitempty"`
+	SQL      string `json:"sql,omitempty"`
 	Severity string `json:"severity,omitempty"`
 	Message  string `json:"message,omitempty"`
 	Detail   string `json:"detail,omitempty"`
@@ -103,8 +103,8 @@ func (e *ErrorResponse) Error() string {
 		ret = append(ret, e.Message)
 	}
 	if e.Backend != nil {
-		if e.Backend.Sql != "" {
-			ret = append(ret, fmt.Sprintf("sql: %s", e.Backend.Sql))
+		if e.Backend.SQL != "" {
+			ret = append(ret, fmt.Sprintf("sql: %s", e.Backend.SQL))
 		}
 		if e.Backend.Message != "" {
 			ret = append(ret, fmt.Sprintf("message: %s", e.Backend.Message))
@@ -119,15 +119,15 @@ func (e *ErrorResponse) Error() string {
 			ret = append(ret, fmt.Sprintf("detail: %s", e.Backend.Detail))
 		}
 	}
-	
+
 	return strings.Join(ret, ": ")
 }
 
-// Open makes sure all the neccessary configuration fields are set,
+// Open makes sure all the necessary configuration fields are set,
 // sets default values for missing fields, and logs on to the API
 // using Basic authentication. Any further API calls will use the JWT
 // token for authorization. The library will transparently refresh the
-// JWT token when neccessary.
+// JWT token when necessary.
 func (c *Client) Open() error {
 	if c.Username == "" {
 		return fmt.Errorf("missing: Username")
@@ -135,20 +135,20 @@ func (c *Client) Open() error {
 	if c.Password == "" {
 		return fmt.Errorf("missing: Password")
 	}
-	if c.BaseUrl == "" {
-		return fmt.Errorf("missing: BaseUrl")
+	if c.BaseURL == "" {
+		return fmt.Errorf("missing: BaseURL")
 	}
 	if c.Timeout == 0 {
 		c.Timeout = 30
 	}
 
-	u, err := url.Parse(c.BaseUrl)
+	u, err := url.Parse(c.BaseURL)
 	if err != nil {
 		return err
 	}
 	c.url = u
 	if c.url.Path == "" {
-		return fmt.Errorf("missing: path part in BaseUrl")
+		return fmt.Errorf("missing: path part in BaseURL")
 	}
 	c.prefix = c.url.Path
 	c.url.Path = ""
@@ -205,7 +205,7 @@ func (c *Client) Post(query string, post, resp interface{}) error {
 	return c.Unmarshal("POST", query, post, resp)
 }
 
-// Unmarshall will perform an API call to stratum. It takes a method,
+// Unmarshal will perform an API call to stratum. It takes a method,
 // query string, post data, and a response parameter. The post data
 // should be a map or JSON text when post data is provided, otherwise
 // nil. If the response parameter is nil, no data will be
@@ -217,11 +217,11 @@ func (c *Client) Unmarshal(method, query string, data, resp interface{}) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if resp != nil {
 		return json.Unmarshal(content, resp)
 	}
-	
+
 	return nil
 }
 
@@ -231,15 +231,15 @@ func (c *Client) Unmarshal(method, query string, data, resp interface{}) error {
 // response body and an error.
 func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 	method = strings.ToUpper(method)
-	
+
 	if data != nil && method == "GET" {
 		return nil, fmt.Errorf("post data not allowed with method %s", method)
 	}
-	
+
 	prefix := c.prefix + "/"
 	if query == "login/v1" {
 		prefix = ""
-	} else if ! c.opened {
+	} else if !c.opened {
 		return nil, fmt.Errorf("config not opened with Open()")
 	}
 
@@ -251,7 +251,8 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 	var post []byte
 	if data != nil {
 		switch data := data.(type) {
-		case []byte: post = data
+		case []byte:
+			post = data
 		default:
 			d, err := json.Marshal(data)
 			if err != nil {
@@ -262,20 +263,20 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 	}
 
 	req, err := http.NewRequest(method, u.String(), bytes.NewReader(post))
-        if err != nil {
-                return nil, err
-        }
+	if err != nil {
+		return nil, err
+	}
 
 	agent := "StratumClient/1.0"
 	if c.UserAgent != "" {
 		agent = agent + " (" + c.UserAgent + ")"
 	}
-	req.Header.Set("User-Agent",   agent)
+	req.Header.Set("User-Agent", agent)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept",       "application/json")
-	
+	req.Header.Set("Accept", "application/json")
+
 	if query == "login/v1" && method == "GET" {
-		req.Header.Set("Authorization", "Basic " + base64.StdEncoding.EncodeToString([]byte(c.Username + ":" + c.Password)))
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(c.Username+":"+c.Password)))
 	} else {
 		if c.token == "" || time.Now().After(c.validUntil) {
 			// token expired or missing: get a fresh one
@@ -285,7 +286,7 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 				return nil, err
 			}
 		}
-		req.Header.Set("Authorization", "Bearer " + c.token)
+		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
 	client := http.Client{
@@ -293,15 +294,15 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 	}
 
 	resp, err := client.Do(req)
-        if err != nil {
-                return nil, err
-        }
-        defer resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-        body, err := ioutil.ReadAll(resp.Body)
-        if err != nil {
-                return nil, err
-        }
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	ct := resp.Header.Get("Content-Type")
 	if !(resp.StatusCode == 200 || resp.StatusCode == 201) {
@@ -312,12 +313,10 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 			}
 			eresp.Status = resp.Status
 			eresp.StatusCode = resp.StatusCode
-			
+
 			return nil, eresp
-		} else {
-			return nil, fmt.Errorf("%s", resp.Status)
 		}
-		
+		return nil, fmt.Errorf("%s", resp.Status)
 	}
 
 	if ct != "application/json" {
@@ -331,7 +330,7 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 // Basic authentication to retrieve a Bearer token (JWT). The function
 // returns an error if any.
 func (c *Client) login() error {
-	body, err := c.Call("GET","login/v1", nil)
+	body, err := c.Call("GET", "login/v1", nil)
 	if err != nil {
 		return err
 	}
