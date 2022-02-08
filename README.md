@@ -1,4 +1,5 @@
 # stratumclient
+[![Go Reference](https://pkg.go.dev/badge/github.com/stianwa/stratumclient.svg)](https://pkg.go.dev/github.com/stianwa/stratumclient) [![Go Report Card](https://goreportcard.com/badge/github.com/stianwa/stratumclient)](https://goreportcard.com/report/github.com/stianwa/stratumclient)
 
 Package stratumclient implements a thin client library for the Stratum
 API. The Stratum API is a query based REST API and the API itself has
@@ -8,7 +9,7 @@ can usually be found on the API server at https://example.com/stratum/docs/
 Installation
 ------------
 
-The recommended way to install intset
+The recommended way to install stratumclient
 
 ```
 go get github.com/stianwa/stratumclient
