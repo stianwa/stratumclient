@@ -43,7 +43,7 @@ func main() {
         c := &stratumclient.Client{
                 Username: "apiclienttest",
                 Password: os.Getenv("STRATUM_PASSWORD"),
-                BaseUrl:  "https://example.com/stratum/v1",
+                BaseURL:  "https://example.com/stratum/v1",
         }
 
 	// Login
