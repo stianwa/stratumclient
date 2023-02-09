@@ -3,36 +3,36 @@
 // traditional resources. The documentation can be found on the API
 // server: https://<server>/stratum/docs/
 //
-//  package stratumclient
+//	 package stratumclient
 //
-//  import (
-//          "log"
-//          "fmt"
-//          "github.com/stianwa/stratumclient"
-//  )
+//	 import (
+//	         "log"
+//	         "fmt"
+//	         "github.com/stianwa/stratumclient"
+//	 )
 //
-//  type Platform struct {
-//	Id    int    `json:"id"`
-//	Name  string `json:"name"`
-//  }
+//	 type Platform struct {
+//		Id    int    `json:"id"`
+//		Name  string `json:"name"`
+//	 }
 //
-//  func main() {
-//      c := &stratumclient.Client{Username: "myuser",
-//                                 Password: "mypassword",
-//                                 BaseURL:  "https://server/stratum/v1"}
-//      if err := c.Open(); err != nil {
-//          log.Fatal(err)
-//      }
+//	 func main() {
+//	     c := &stratumclient.Client{Username: "myuser",
+//	                                Password: "mypassword",
+//	                                BaseURL:  "https://server/stratum/v1"}
+//	     if err := c.Open(); err != nil {
+//	         log.Fatal(err)
+//	     }
 //
-//      var platforms []*Platform
-//	if err := c.Get("platform/?orderby=name&select=id,name&where=name~linux", &platforms); err != nil {
-//                t.Fatalf("get platforms: %v\n", err)
-//	}
+//	     var platforms []*Platform
+//		if err := c.Get("platform/?orderby=name&select=id,name&where=name~linux", &platforms); err != nil {
+//	               t.Fatalf("get platforms: %v\n", err)
+//		}
 //
-//	for _, platform := range platforms {
-//		fmt.Print("[%d] %s\n", platform.Id, platform.Name)
-//	}
-//  }
+//		for _, platform := range platforms {
+//			fmt.Print("[%d] %s\n", platform.Id, platform.Name)
+//		}
+//	 }
 package stratumclient
 
 import (
@@ -49,16 +49,16 @@ import (
 
 // Client holds client config and token data.
 type Client struct {
-	Username   string
-	Password   string
-	BaseURL    string
-	UserAgent  string
-	Timeout    int
-	prefix     string
-	url        *url.URL
-	token      string
-	validUntil time.Time
-	opened     bool
+	Username   string    `yaml:"username" json:"username"`
+	Password   string    `yaml:"password" json:"password"`
+	BaseURL    string    `yaml:"baseURL" json:"base_url"`
+	UserAgent  string    `yaml:"userAgent" json:"user_agent"`
+	Timeout    int       `yaml:"timeout" json:"timeout"`
+	prefix     string    `yaml:"-" json:"-"`
+	url        *url.URL  `yaml:"-" json:"-"`
+	token      string    `yaml:"-" json:"-"`
+	validUntil time.Time `yaml:"-" json:"-"`
+	opened     bool      `yaml:"-" json:"-"`
 }
 
 // LoginResponse holds the response from a successful login

@@ -10,9 +10,10 @@ test:
 	@$(GOCMD) test -v
 
 lint:
+	@go vet *.go
+	@go fmt *.go
 	@misspell .
-	@golint
+	@golint *.go
 	@gocyclo -top 4 .
 	@gocyclo -over 50 .
 	@ineffassign .
-	@gofmt -d .
