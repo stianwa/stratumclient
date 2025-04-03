@@ -12,7 +12,7 @@
 //	 )
 //
 //	 type Platform struct {
-//		Id    int    `json:"id"`
+//		ID    int    `json:"id"`
 //		Name  string `json:"name"`
 //	 }
 //
@@ -37,6 +37,7 @@ package stratumclient
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -49,16 +50,17 @@ import (
 
 // Client holds client config and token data.
 type Client struct {
-	Username   string    `yaml:"username" json:"username"`
-	Password   string    `yaml:"password" json:"password"`
-	BaseURL    string    `yaml:"baseURL" json:"base_url"`
-	UserAgent  string    `yaml:"userAgent" json:"user_agent"`
-	Timeout    int       `yaml:"timeout" json:"timeout"`
-	prefix     string    `yaml:"-" json:"-"`
-	url        *url.URL  `yaml:"-" json:"-"`
-	token      string    `yaml:"-" json:"-"`
-	validUntil time.Time `yaml:"-" json:"-"`
-	opened     bool      `yaml:"-" json:"-"`
+	Username           string    `yaml:"username" json:"username"`
+	Password           string    `yaml:"password" json:"password"`
+	BaseURL            string    `yaml:"baseURL" json:"base_url"`
+	UserAgent          string    `yaml:"userAgent" json:"user_agent"`
+	Timeout            int       `yaml:"timeout" json:"timeout"`
+	InsecureSkipVerify bool      `yaml:"insecureSkipVerify" json:"insecure_skip_verify"`
+	prefix             string    `yaml:"-" json:"-"`
+	url                *url.URL  `yaml:"-" json:"-"`
+	token              string    `yaml:"-" json:"-"`
+	validUntil         time.Time `yaml:"-" json:"-"`
+	opened             bool      `yaml:"-" json:"-"`
 }
 
 // LoginResponse holds the response from a successful login
@@ -289,8 +291,12 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
+	customTransport := http.DefaultTransport.(*http.Transport).Clone()
+	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.InsecureSkipVerify}
+
 	client := http.Client{
-		Timeout: time.Duration(c.Timeout) * time.Second,
+		Timeout:   time.Duration(c.Timeout) * time.Second,
+		Transport: customTransport,
 	}
 
 	resp, err := client.Do(req)
