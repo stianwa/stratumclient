@@ -170,7 +170,7 @@ func (c *Client) Open() error {
 // pointer to a slice of struct pointers which the response will be
 // unmarshalled into. The function returns an error upon errors
 // otherwise nil.
-func (c *Client) Get(query string, resp interface{}) error {
+func (c *Client) Get(query string, resp any) error {
 	return c.Unmarshal("GET", query, nil, resp)
 }
 
@@ -181,7 +181,7 @@ func (c *Client) Get(query string, resp interface{}) error {
 // the response parameter should be a pointer to a slice of struct
 // pointers which the response will be unmarshalled into. The
 // function returns an error upon errors otherwise nil.
-func (c *Client) Delete(query string, post, resp interface{}) error {
+func (c *Client) Delete(query string, post, resp any) error {
 	return c.Unmarshal("DELETE", query, post, resp)
 }
 
@@ -192,7 +192,7 @@ func (c *Client) Delete(query string, post, resp interface{}) error {
 // the response parameter should be a pointer to a slice of struct
 // pointers which the response will be unmarshalled into. The
 // function returns an error upon errors otherwise nil.
-func (c *Client) Put(query string, post, resp interface{}) error {
+func (c *Client) Put(query string, post, resp any) error {
 	return c.Unmarshal("PUT", query, post, resp)
 }
 
@@ -203,7 +203,7 @@ func (c *Client) Put(query string, post, resp interface{}) error {
 // the response parameter should be a pointer to a slice of struct
 // pointers which the response will be unmarshalled into. The
 // function returns an error upon errors otherwise nil.
-func (c *Client) Post(query string, post, resp interface{}) error {
+func (c *Client) Post(query string, post, resp any) error {
 	return c.Unmarshal("POST", query, post, resp)
 }
 
@@ -214,7 +214,7 @@ func (c *Client) Post(query string, post, resp interface{}) error {
 // returned. Otherwise the response parameter should be a pointer to a
 // slice of struct pointers which the response will be unmarshalled
 // into. The function returns an error upon errors otherwise nil.
-func (c *Client) Unmarshal(method, query string, data, resp interface{}) error {
+func (c *Client) Unmarshal(method, query string, data, resp any) error {
 	content, err := c.Call(method, query, data)
 	if err != nil {
 		return err
@@ -231,25 +231,27 @@ func (c *Client) Unmarshal(method, query string, data, resp interface{}) error {
 // string, and post data. The post data should be a map or JSON text
 // when post data is provided, otherwise nil. The function returns the
 // response body and an error.
-func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
+func (c *Client) Call(method, query string, data any) ([]byte, error) {
 	method = strings.ToUpper(method)
 
 	if data != nil && method == "GET" {
 		return nil, fmt.Errorf("post data not allowed with method %s", method)
 	}
 
-	prefix := c.prefix + "/"
+	cURL := strings.TrimRight(c.url.String(),"/")
 	if query == "login/v1" {
-		prefix = ""
+		cURL = cURL + "/" + query
 	} else if !c.opened {
 		return nil, fmt.Errorf("config not opened with Open()")
+	} else {
+		cURL = cURL + "/" + strings.TrimRight(strings.TrimLeft(c.prefix,"/"),"/") + "/" + strings.TrimLeft(query,"/")
 	}
 
-	u, err := url.Parse(c.url.String() + "/" + prefix + query)
+	u, err := url.Parse(cURL)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	var post []byte
 	if data != nil {
 		switch data := data.(type) {
@@ -299,6 +301,7 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 		Transport: customTransport,
 	}
 
+	
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -309,7 +312,7 @@ func (c *Client) Call(method, query string, data interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	ct := resp.Header.Get("Content-Type")
 	if !(resp.StatusCode == 200 || resp.StatusCode == 201) {
 		if ct == "application/json" {
